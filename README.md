@@ -2,6 +2,10 @@
 
 Compute Commons is a privacy-first browser compute donor console. It lets a visitor intentionally contribute a short, resource-limited browser session to a reviewed demonstration workload and receive a locally generated, verifiable receipt.
 
+Production: [compute-commons.rishib.com](https://compute-commons.rishib.com)
+
+Repository: [RB3572/compute-commons](https://github.com/RB3572/compute-commons)
+
 ## Product brief
 
 The first release demonstrates the donor-side trust model using a deterministic climate-ensemble sample over synthetic inputs. A visitor can inspect the study and manifest, choose a CPU budget and session cap, start explicitly, pause or stop immediately, and export a contribution receipt. No account or backend is required. A separate researcher proposal form records a review request locally; it never executes submitted code.
@@ -22,7 +26,7 @@ The primary audience is privacy-conscious people who want to help public-interes
 
 ## Visual specification
 
-The accepted concept is stored at `docs/visual-concept.png`. The interface uses an off-white `#F7F7F6` base, white surfaces, near-black text, fine gray borders, and restrained teal `#087F73`. It uses an open two-column console, a thin work-unit lane, 8–10 px radii, and borders rather than shadows. The mobile layout becomes a single column.
+The accepted concept is stored at `docs/visual-concept.png`; a later control-panel exploration is stored at `docs/visual-concept-v2.png`. The implementation follows the accepted teal concept: an off-white `#F7F7F6` base, white surfaces, near-black text, fine gray borders, and restrained teal `#087F73`. It uses an open two-column console, a thin work-unit lane, 8–10 px radii, and borders rather than shadows. The mobile layout becomes a single column.
 
 ## Architecture
 
@@ -45,7 +49,8 @@ npm run build
 
 The production output is `dist/`. No environment variables are required.
 
+Production is deployed from GitHub to Vercel. The custom hostname is registered with the Vercel project and resolves through a DNS-only Cloudflare record to Vercel's requested target, allowing Vercel to terminate TLS directly.
+
 ## Acceptable use
 
 Compute Commons does not permit cryptocurrency mining, credential attacks, surveillance, weapons optimization, personal-data processing, or proprietary payloads. Research proposals are review requests only. A real campaign would require independent security review and institutional verification before distribution.
-
