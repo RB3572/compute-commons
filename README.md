@@ -8,7 +8,7 @@ Repository: [RB3572/compute-commons](https://github.com/RB3572/compute-commons)
 
 ## Product brief
 
-The first release demonstrates the donor-side trust model using a deterministic climate-ensemble sample over synthetic inputs. A visitor can inspect the study and manifest, choose a CPU budget and session cap, start explicitly, pause or stop immediately, and export a contribution receipt. No account or backend is required. A separate researcher proposal form records a review request locally; it never executes submitted code.
+The first release demonstrates the donor-side trust model using a deterministic climate-ensemble sample over synthetic inputs. A visitor can inspect the study and manifest, choose a CPU budget and session cap, start explicitly, pause or stop immediately, and export a contribution receipt. Donating requires no account and runs entirely in the browser. A separate researcher proposal form submits a review request to a backend (a Vercel serverless function backed by Neon Postgres); submissions are stored for manual review in a reviewer console at `#admin` and never execute submitted code.
 
 The primary audience is privacy-conscious people who want to help public-interest research without surrendering control of their device. Success means a visitor understands the workload, starts deliberately, sees real work complete, can stop instantly, and can inspect the resulting receipt.
 
@@ -17,9 +17,9 @@ The primary audience is privacy-conscious people who want to help public-interes
 - Compute never starts automatically. Every session requires a fresh click.
 - The shipped worker runs only a bundled deterministic workload over synthetic inputs. Researcher submissions cannot reach the worker.
 - The app requests no identity, sensor, filesystem, clipboard, location, or notification permission.
-- Session progress and proposal drafts stay in memory. Exporting a receipt creates a local download only when requested.
-- The worker has no application-defined network capability. A strict Content Security Policy limits scripts, connections, frames, and objects.
-- CPU percentage is implemented as cooperative duty-cycle throttling; browser scheduling and device power vary, so the energy figure is explicitly an estimate.
+- Donor session progress stays in browser memory and is never transmitted. Exporting a receipt creates a local download only when requested. Researcher proposals are the one deliberate exception: the fields you submit are sent to the backend and stored in Postgres for review.
+- The worker has no application-defined network capability. A strict Content Security Policy limits scripts, connections, frames, and objects; the only same-origin endpoint is `/api/proposals`, used by the proposal form, never by the worker.
+- CPU percentage is enforced as cooperative duty-cycle throttling **inside the worker**: each busy compute slice is followed by a proportional idle slice, so average single-core utilization tracks the slider. Browser scheduling and device power vary, so the energy figure (derived from measured busy time) is explicitly an estimate.
 - Pause and stop terminate scheduling promptly. Stopping terminates the worker, preventing continued application work.
 - Remaining risks include browser/runtime defects, inaccurate device energy estimates, and thermal behavior outside the app's control. The product advises stopping if the device becomes warm.
 - No claim is made that this demo produces publishable science. The sample demonstrates bounded execution and provenance.
@@ -31,10 +31,10 @@ The accepted concept is stored at `docs/visual-concept.png`; a later control-pan
 ## Architecture
 
 - React 19, TypeScript, and Vite
-- Dedicated Web Worker for deterministic Monte Carlo work units
+- Dedicated Web Worker running a continuous, genuinely CPU-bound Monte Carlo workload with cooperative duty-cycle throttling and live measured throughput
 - Web Crypto SHA-256 verification of the bundled workload manifest
 - Vitest for deterministic core and reducer tests
-- Client-only deployment; no database, OAuth, analytics, or cookies
+- Vercel serverless functions (`/api/proposals`) backed by Neon Postgres for researcher proposal intake and the reviewer console; donor compute remains fully client-side with no analytics or cookies
 
 ## Operations
 
@@ -47,7 +47,7 @@ npm test
 npm run build
 ```
 
-The production output is `dist/`. No environment variables are required.
+The production output is `dist/`; Vercel also builds the `api/` directory as Node serverless functions. Donor compute needs no environment variables. The proposal backend needs `DATABASE_URL` (provisioned by Vercel's native Neon integration) and `ADMIN_TOKEN` (a random secret gating the reviewer console). The `proposals` table is created automatically on first request. Type-check the functions with `npm run typecheck:api`.
 
 Production is deployed from GitHub to Vercel. The custom hostname is registered with the Vercel project and resolves through a DNS-only Cloudflare record to Vercel's requested target, allowing Vercel to terminate TLS directly.
 

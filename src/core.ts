@@ -5,13 +5,18 @@ export type SessionState = {
   completed: number
   elapsedSeconds: number
   aggregate: number
+  totalSamples: number   // cumulative Monte Carlo samples actually computed
+  busyMs: number         // cumulative CPU-busy time (excludes throttle idle)
+  samplesPerSec: number  // last measured single-core throughput during busy slices
   error?: string
 }
 
 export type SessionAction =
+  | { type: 'RESET' }
   | { type: 'VERIFY' }
   | { type: 'START' }
   | { type: 'RESULT'; estimate: number }
+  | { type: 'PROGRESS'; totalSamples: number; busyMs: number; samplesPerSec: number }
   | { type: 'TICK' }
   | { type: 'PAUSE' }
   | { type: 'RESUME' }
@@ -19,16 +24,18 @@ export type SessionAction =
   | { type: 'COMPLETE' }
   | { type: 'ERROR'; message: string }
 
-export const initialSession: SessionState = { status: 'ready', completed: 0, elapsedSeconds: 0, aggregate: 0 }
+export const initialSession: SessionState = { status: 'ready', completed: 0, elapsedSeconds: 0, aggregate: 0, totalSamples: 0, busyMs: 0, samplesPerSec: 0 }
 
 export function sessionReducer(state: SessionState, action: SessionAction): SessionState {
   switch (action.type) {
+    case 'RESET': return { ...initialSession }
     case 'VERIFY': return { ...state, status: 'verifying', error: undefined }
     case 'START': return { ...state, status: 'running', error: undefined }
     case 'RESULT': {
       const completed = state.completed + 1
       return { ...state, completed, aggregate: state.aggregate + (action.estimate - state.aggregate) / completed }
     }
+    case 'PROGRESS': return { ...state, totalSamples: action.totalSamples, busyMs: action.busyMs, samplesPerSec: action.samplesPerSec }
     case 'TICK': return state.status === 'running' ? { ...state, elapsedSeconds: state.elapsedSeconds + 1 } : state
     case 'PAUSE': return state.status === 'running' ? { ...state, status: 'paused' } : state
     case 'RESUME': return state.status === 'paused' ? { ...state, status: 'running' } : state
@@ -36,6 +43,19 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
     case 'COMPLETE': return { ...state, status: 'complete' }
     case 'ERROR': return { ...state, status: 'error', error: action.message }
   }
+}
+
+// Energy estimate from measured CPU-busy time. Assumes a single active core at an
+// indicative ~12 W; explicitly an estimate, not a device-level measurement.
+const ASSUMED_CORE_WATTS = 12
+export function estimateWattHours(busyMs: number): number {
+  return (busyMs / 1000) * ASSUMED_CORE_WATTS / 3600
+}
+
+export function formatCount(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}k`
+  return `${value}`
 }
 
 export const manifest = {
