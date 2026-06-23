@@ -142,7 +142,7 @@ footer { max-width: 1480px; margin: 0 auto; border: 1px solid var(--border); bor
 .modeled-note span { color: #555553; font-size: 12.5px; line-height: 1.5; }
 
 /* How it works page */
-.howto-page { max-width: 880px; margin: 0 auto; padding: 8px 28px 72px; }
+.howto-page { display: block; background: none; border: 0; max-width: 880px; margin: 0 auto; padding: 8px 28px 72px; }
 .howto-hero { padding: 44px 0 36px; border-bottom: 1px solid var(--border); }
 .howto-hero h1 { font-size: clamp(32px, 4vw, 48px); line-height: 1.04; letter-spacing: -.045em; margin: 0 0 16px; }
 .howto-sub { font-size: 17px; line-height: 1.55; color: #454543; max-width: 660px; margin: 0 0 26px; }
@@ -157,9 +157,9 @@ footer { max-width: 1480px; margin: 0 auto; border: 1px solid var(--border); bor
 .howto-steps h2, .howto-faq h2 { font-size: 22px; letter-spacing: -.03em; margin: 0 0 22px; }
 .howto-steps ol { list-style: none; counter-reset: step; padding: 0; margin: 0; display: grid; gap: 16px; }
 .howto-steps li { counter-increment: step; display: grid; grid-template-columns: 38px 1fr; gap: 16px; align-items: start; }
-.howto-steps li::before { content: counter(step); width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
-.howto-steps strong { display: block; font-size: 15.5px; margin-bottom: 4px; }
-.howto-steps span { color: #4a4a48; font-size: 14px; line-height: 1.55; }
+.howto-steps li::before { content: counter(step); grid-column: 1; grid-row: 1; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.howto-steps strong { grid-column: 2; display: block; font-size: 15.5px; margin-bottom: 4px; }
+.howto-steps span { grid-column: 2; color: #4a4a48; font-size: 14px; line-height: 1.55; }
 .faq-list { display: grid; gap: 0; }
 .faq-item { border-top: 1px solid var(--border); }
 .faq-item:last-child { border-bottom: 1px solid var(--border); }
