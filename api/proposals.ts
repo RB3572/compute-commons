@@ -101,7 +101,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    res.setHeader('Allow', 'GET, POST, PATCH')
+    if (req.method === 'DELETE') {
+      const auth = await authorizeAdmin(req.headers.authorization)
+      if (!auth.ok) { res.status(auth.status).json({ error: auth.error }); return }
+      const id = str(req.query.id)
+      if (!id) { res.status(400).json({ error: 'Missing proposal id.' }); return }
+      const rows = await sql`DELETE FROM proposals WHERE id = ${id} RETURNING id`
+      if (!rows.length) { res.status(404).json({ error: 'Proposal not found.' }); return }
+      res.status(200).json({ id: rows[0].id, deleted: true })
+      return
+    }
+
+    res.setHeader('Allow', 'GET, POST, PATCH, DELETE')
     res.status(405).json({ error: 'Method not allowed.' })
   } catch (error) {
     console.error('proposals handler error', error)
