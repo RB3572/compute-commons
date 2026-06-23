@@ -2,7 +2,13 @@
 // are not exposed as routes by Vercel, so this is import-only helper code.
 import { neon } from '@neondatabase/serverless'
 
-const connectionString = process.env.DATABASE_URL
+// Vercel's native Neon integration injects the connection string under one of
+// several names depending on integration version; accept any of them.
+const connectionString =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.DATABASE_URL_UNPOOLED ||
+  process.env.POSTGRES_URL_NON_POOLING
 
 // `neon()` returns a tagged-template query function; interpolated values are sent
 // as bound parameters, so these queries are not vulnerable to SQL injection.
