@@ -8,10 +8,12 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
+    "typecheck:api": "tsc -p tsconfig.api.json --pretty false",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@neondatabase/serverless": "latest",
     "@vitejs/plugin-react": "latest",
     "vite": "latest",
     "typescript": "latest",
@@ -20,6 +22,7 @@
     "lucide-react": "latest"
   },
   "devDependencies": {
+    "@vercel/node": "latest",
     "@eslint/js": "latest",
     "@testing-library/react": "latest",
     "@testing-library/jest-dom": "latest",
