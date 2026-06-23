@@ -72,6 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         RETURNING id, status, created_at
       `
       const row = rows[0]
+      if (!row) { res.status(500).json({ error: 'Failed to record the proposal.' }); return }
       res.status(201).json({ id: row.id, status: row.status, createdAt: row.created_at })
       return
     }

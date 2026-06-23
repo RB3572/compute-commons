@@ -112,12 +112,72 @@ footer { max-width: 1480px; margin: 0 auto; border: 1px solid var(--border); bor
 .pill.status-approved { color: #2f6b46; background: #eef8f1; border-color: #b6dcc3; }
 .pill.status-rejected { color: #97352f; background: #fdf2f1; border-color: #e3c4c1; }
 
+/* Project catalog */
+.catalog-panel { grid-column: 1 / -1; border-bottom: 1px solid var(--border); padding: 32px 32px 30px; }
+.catalog-head { max-width: 760px; }
+.catalog-head h1 { font-size: clamp(28px, 3vw, 40px); line-height: 1.06; margin: 0 0 14px; letter-spacing: -.04em; }
+.catalog-head p { color: #454543; font-size: 15px; line-height: 1.55; margin: 0; }
+.catalog-head a { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; white-space: nowrap; }
+.project-catalog { margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.project-card { text-align: left; display: flex; flex-direction: column; gap: 7px; padding: 18px; border: 1px solid var(--border); border-radius: 11px; background: #fff; cursor: pointer; transition: border-color .12s ease, background .12s ease; }
+.project-card:hover:not(:disabled) { border-color: #c9c9c5; background: #fcfcfb; }
+.project-card.selected { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: #f6fbfa; }
+/* Inactive (a session is running): muted surface, but text keeps AA contrast — no opacity dimming. */
+.project-card:disabled { background: #f1f1ef; border-color: #e0e0dc; cursor: not-allowed; }
+.project-card:disabled .project-icon { background: #e6e6e3; color: #7a7a77; }
+.project-card-head { display: flex; align-items: center; gap: 9px; margin-bottom: 3px; }
+.project-icon { width: 32px; height: 32px; border-radius: 8px; background: #eef6f4; color: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.project-card.selected .project-icon { background: var(--accent); color: #fff; }
+.project-area { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; color: var(--muted); }
+.project-check { margin-left: auto; color: var(--accent); display: inline-flex; }
+.project-card strong { font-size: 16.5px; letter-spacing: -.02em; }
+.project-disease { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.project-tagline { font-size: 13px; color: #454543; line-height: 1.45; }
+.study-name { font-size: clamp(24px, 2.4vw, 30px); line-height: 1.1; letter-spacing: -.035em; margin: 0 0 8px; }
+.modeled-note { margin-top: 22px; padding: 15px 16px; border: 1px solid var(--border); border-radius: 9px; display: flex; gap: 13px; align-items: flex-start; background: #fafafa; }
+.modeled-note > svg { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+.modeled-note div { display: flex; flex-direction: column; gap: 5px; }
+.modeled-note strong { font-size: 13px; }
+.modeled-note span { color: #555553; font-size: 12.5px; line-height: 1.5; }
+
+/* How it works page */
+.howto-page { max-width: 880px; margin: 0 auto; padding: 8px 28px 72px; }
+.howto-hero { padding: 44px 0 36px; border-bottom: 1px solid var(--border); }
+.howto-hero h1 { font-size: clamp(32px, 4vw, 48px); line-height: 1.04; letter-spacing: -.045em; margin: 0 0 16px; }
+.howto-sub { font-size: 17px; line-height: 1.55; color: #454543; max-width: 660px; margin: 0 0 26px; }
+.howto-section { display: grid; grid-template-columns: 56px 1fr; gap: 28px; padding: 34px 0; border-bottom: 1px solid var(--border); }
+.howto-section-label .doc-num { font-size: 13px; font-weight: 700; color: #c4c4c0; font-variant-numeric: tabular-nums; }
+.howto-section-body { min-width: 0; }
+.howto-section-body h2 { font-size: 21px; letter-spacing: -.03em; margin: 0 0 14px; }
+.howto-section-body p { font-size: 15px; line-height: 1.65; color: #3f3f3d; margin: 0; }
+.howto-section-body ul { margin: 16px 0 0; padding-left: 20px; display: grid; gap: 9px; }
+.howto-section-body li { font-size: 14px; line-height: 1.55; color: #454543; }
+.howto-steps, .howto-faq { padding: 36px 0; border-bottom: 1px solid var(--border); }
+.howto-steps h2, .howto-faq h2 { font-size: 22px; letter-spacing: -.03em; margin: 0 0 22px; }
+.howto-steps ol { list-style: none; counter-reset: step; padding: 0; margin: 0; display: grid; gap: 16px; }
+.howto-steps li { counter-increment: step; display: grid; grid-template-columns: 38px 1fr; gap: 16px; align-items: start; }
+.howto-steps li::before { content: counter(step); width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.howto-steps strong { display: block; font-size: 15.5px; margin-bottom: 4px; }
+.howto-steps span { color: #4a4a48; font-size: 14px; line-height: 1.55; }
+.faq-list { display: grid; gap: 0; }
+.faq-item { border-top: 1px solid var(--border); }
+.faq-item:last-child { border-bottom: 1px solid var(--border); }
+.faq-item summary { cursor: pointer; padding: 16px 0; font-weight: 600; font-size: 15.5px; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: "+"; color: var(--accent); font-size: 20px; font-weight: 400; flex-shrink: 0; }
+.faq-item[open] summary::after { content: "–"; }
+.faq-item p { margin: 0 0 18px; color: #454543; font-size: 14.5px; line-height: 1.65; max-width: 70ch; }
+.howto-cta { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 48px 0 8px; }
+.howto-cta > svg { color: var(--accent); }
+.howto-cta p { font-size: 17px; line-height: 1.5; color: #3f3f3d; max-width: 560px; margin: 0; }
+
 /* Documentation sections */
 .docs-wrapper { max-width: 1480px; margin: 0 auto; border: 1px solid var(--border); border-top: 0; }
 .doc-section { border-top: 1px solid var(--border); padding: 32px 28px; display: grid; grid-template-columns: 160px 1fr; gap: 48px; align-items: start; }
 .doc-label { display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
 .doc-num { font-size: 11px; font-weight: 700; color: #ccc; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
 .doc-label h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 0; }
+.doc-body { min-width: 0; } /* allow the code block to scroll instead of forcing grid-column overflow */
 .doc-body h3 { font-size: 16px; font-weight: 700; margin: 0 0 14px; letter-spacing: -.025em; }
 .doc-body p { font-size: 14px; color: #454543; line-height: 1.6; margin: 0 0 10px; }
 .doc-body ul { padding-left: 18px; margin: 0 0 10px; }
@@ -134,6 +194,6 @@ footer { max-width: 1480px; margin: 0 auto; border: 1px solid var(--border); bor
 .csp-table td { padding: 7px 12px; border-bottom: 1px solid #eeeeeb; vertical-align: top; line-height: 1.5; color: #454543; font-size: 13px; }
 .csp-table td:first-child, .csp-table td:nth-child(2) { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #3a3a38; white-space: nowrap; }
 
-@media (max-width: 900px) { header { padding: 0 18px; } nav a { display: none; } main { display: block; border: 0; }.study-panel, .control-panel { min-height: 0; padding: 28px 22px; }.study-panel { border-right: 0; }.control-panel { border-top: 1px solid var(--border); }.provenance-grid { grid-template-columns: 1fr 1fr; }.provenance-item { border-bottom: 1px solid var(--border); }.work-strip { grid-template-columns: 1fr; }.session-metrics { justify-content: space-between; }.safety { grid-template-columns: 1fr; gap: 10px; } .doc-section { grid-template-columns: 1fr; gap: 10px; padding: 24px 22px; } .csp-table td:nth-child(3) { display: none; } .docs-wrapper { border-left: 0; border-right: 0; } }
-@media (max-width: 560px) { .brand { font-size: 16px; } nav { gap: 0; } header { height: 58px; }.status-row { display: block; }.status-row .button { margin-top: 8px; }.start-button { width: 100%; }.session-actions > div { flex-wrap: wrap; }.session-actions span { width: 100%; margin: 3px 0 0; }.provenance-grid { display: block; }.provenance-item { border-right: 0; }.unit-lane { gap: 3px; }.unit-lane i { height: 20px; }.receipt { align-items: flex-start; flex-wrap: wrap; }.receipt .button { width: 100%; }.safety { padding: 20px 22px; }footer { padding: 18px 22px; flex-wrap: wrap; }footer span { width: 100%; } .doc-section { padding: 20px 18px; } .doc-code { font-size: 11px; padding: 12px 14px; } }
+@media (max-width: 900px) { header { padding: 8px 18px; height: auto; min-height: 60px; flex-wrap: wrap; row-gap: 4px; } nav { gap: 18px; font-size: 13px; flex-wrap: wrap; } main { display: block; border: 0; }.study-panel, .control-panel { min-height: 0; padding: 28px 22px; }.study-panel { border-right: 0; }.control-panel { border-top: 1px solid var(--border); }.provenance-grid { grid-template-columns: 1fr 1fr; }.provenance-item { border-bottom: 1px solid var(--border); }.work-strip { grid-template-columns: 1fr; }.session-metrics { justify-content: space-between; }.safety { grid-template-columns: 1fr; gap: 10px; } .doc-section { grid-template-columns: 1fr; gap: 10px; padding: 24px 22px; } .csp-table td:nth-child(3) { display: none; } .docs-wrapper { border-left: 0; border-right: 0; } .catalog-panel { padding: 26px 22px; } .project-catalog { grid-template-columns: 1fr; } .howto-section { grid-template-columns: 1fr; gap: 10px; } .howto-page { padding: 4px 22px 56px; } .csp-table td:first-child, .csp-table td:nth-child(2) { white-space: normal; word-break: break-word; } }
+@media (max-width: 560px) { .brand { font-size: 16px; } nav { gap: 14px; width: 100%; } header { min-height: 56px; }.status-row { display: block; }.status-row .button { margin-top: 8px; }.start-button { width: 100%; }.session-actions > div { flex-wrap: wrap; }.session-actions span { width: 100%; margin: 3px 0 0; }.provenance-grid { display: block; }.provenance-item { border-right: 0; }.unit-lane { gap: 3px; }.unit-lane i { height: 20px; }.receipt { align-items: flex-start; flex-wrap: wrap; }.receipt .button { width: 100%; }.safety { padding: 20px 22px; }footer { padding: 18px 22px; flex-wrap: wrap; }footer span { width: 100%; } .doc-section { padding: 20px 18px; } .doc-code { font-size: 11px; padding: 12px 14px; } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
