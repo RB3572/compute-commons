@@ -90,12 +90,13 @@ footer { max-width: 1480px; margin: 0 auto; border: 1px solid var(--border); bor
 
 /* Reviewer console (#admin) */
 .admin-shell { min-height: 100vh; }
-.admin-main { max-width: 920px; margin: 0 auto; padding: 36px 28px 64px; }
+.admin-main { display: block; max-width: 920px; margin: 0 auto; padding: 36px 28px 64px; background: none; border: 0; }
 .admin-main h1 { font-size: clamp(26px, 3vw, 34px); letter-spacing: -.035em; margin: 0 0 10px; }
 .admin-shell nav { gap: 20px; }
-.admin-auth { max-width: 360px; margin-top: 28px; display: grid; gap: 14px; }
-.admin-auth label { display: grid; gap: 7px; font-size: 13px; font-weight: 600; }
-.admin-auth input { border: 1px solid #cdcdc9; border-radius: 6px; padding: 10px; }
+.admin-auth { max-width: 400px; margin-top: 28px; display: grid; gap: 16px; padding: 26px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+.signin-copy { margin: 0; color: #454543; font-size: 14px; line-height: 1.5; }
+.gis-button { min-height: 44px; }
+.signed-in { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .admin-toolbar { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 14px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
 .empty-state { color: var(--muted); padding: 40px 0; text-align: center; }
 .proposal-list { display: grid; gap: 14px; }

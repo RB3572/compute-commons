@@ -47,7 +47,7 @@ npm test
 npm run build
 ```
 
-The production output is `dist/`; Vercel also builds the `api/` directory as Node serverless functions. Donor compute needs no environment variables. The proposal backend needs `DATABASE_URL` (provisioned by Vercel's native Neon integration) and `ADMIN_TOKEN` (a random secret gating the reviewer console). The `proposals` table is created automatically on first request. Type-check the functions with `npm run typecheck:api`.
+The production output is `dist/`; Vercel also builds the `api/` directory as Node serverless functions. Donor compute needs no environment variables. The proposal backend needs `DATABASE_URL` (provisioned by Vercel's native Neon integration). The reviewer console at `#admin` authenticates with Google Sign-In: the API verifies the Google ID token and checks the email against an allowlist (`ADMIN_EMAILS`, default the project owner) for the configured `GOOGLE_CLIENT_ID` (a "Web application" OAuth client whose authorized JavaScript origin must include the production domain). The `proposals` table is created automatically on first request. Type-check the functions with `npm run typecheck:api`.
 
 Production is deployed from GitHub to Vercel. The custom hostname is registered with the Vercel project and resolves through a DNS-only Cloudflare record to Vercel's requested target, allowing Vercel to terminate TLS directly.
 

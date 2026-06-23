@@ -84,53 +84,125 @@ function ProposalDialog({ onClose }: { onClose: () => void }) {
 
 type Proposal = { id: string; institution: string; research_question: string; repository: string; data_classification: string; contact_email: string | null; status: string; created_at: string }
 
+// Public OAuth Web client ID (kept in sync with the api/_auth.ts default).
+const GOOGLE_CLIENT_ID = '804091048275-lng855r6ncg7i8is9d82evtq7rjv7m52.apps.googleusercontent.com'
+
+type GoogleIdApi = {
+  accounts: { id: {
+    initialize: (config: { client_id: string; callback: (response: { credential: string }) => void; auto_select?: boolean }) => void
+    renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void
+    disableAutoSelect: () => void
+  } }
+}
+declare global { interface Window { google?: GoogleIdApi } }
+
+// Load Google Identity Services lazily, and only on the reviewer route — donor
+// visitors never fetch any third-party script.
+let gisPromise: Promise<void> | null = null
+function loadGis(): Promise<void> {
+  if (window.google?.accounts?.id) return Promise.resolve()
+  if (!gisPromise) {
+    gisPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.onload = () => resolve()
+      script.onerror = () => { gisPromise = null; reject(new Error('Failed to load Google sign-in')) }
+      document.head.appendChild(script)
+    })
+  }
+  return gisPromise
+}
+
+// Decode the email from a Google ID token for display only — never for trust;
+// the server independently verifies the token's signature and the allowlist.
+function decodeEmail(idToken: string): string | null {
+  try {
+    const part = idToken.split('.')[1]?.replace(/-/g, '+').replace(/_/g, '/')
+    if (!part) return null
+    const payload = JSON.parse(decodeURIComponent(escape(atob(part)))) as { email?: string }
+    return typeof payload.email === 'string' ? payload.email : null
+  } catch { return null }
+}
+
+type AdminPhase = 'signin' | 'checking' | 'authed' | 'denied'
+
 function AdminView() {
-  const [token, setToken] = useState(() => sessionStorage.getItem('cc-admin-token') ?? '')
-  const [authed, setAuthed] = useState(false)
+  const [idToken, setIdToken] = useState<string | null>(() => sessionStorage.getItem('cc-admin-idtoken'))
+  const [phase, setPhase] = useState<AdminPhase>(() => (sessionStorage.getItem('cc-admin-idtoken') ? 'checking' : 'signin'))
+  const [email, setEmail] = useState<string | null>(null)
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const buttonRef = useRef<HTMLDivElement>(null)
 
-  async function load(withToken: string) {
+  async function load(token: string) {
     setLoading(true); setError(null)
     try {
-      const response = await fetch('/api/proposals', { headers: { Authorization: `Bearer ${withToken}` } })
-      if (response.status === 401) { setError('Invalid admin token.'); setAuthed(false); setLoading(false); return }
-      if (response.status === 503) { setError('Admin review is not configured on the server (ADMIN_TOKEN missing).'); setLoading(false); return }
+      const response = await fetch('/api/proposals', { headers: { Authorization: `Bearer ${token}` } })
+      if (response.status === 401) {
+        sessionStorage.removeItem('cc-admin-idtoken'); setIdToken(null); setPhase('signin')
+        setError('Your Google session expired. Please sign in again.'); setLoading(false); return
+      }
+      if (response.status === 403) {
+        const body = await response.json().catch(() => ({}))
+        setEmail(decodeEmail(token)); setPhase('denied'); setError(body.error ?? 'This Google account is not authorized.')
+        setLoading(false); return
+      }
       if (!response.ok) { setError(`Could not load proposals (HTTP ${response.status}).`); setLoading(false); return }
       const result = await response.json()
-      setProposals(result.proposals ?? [])
-      setAuthed(true)
-      sessionStorage.setItem('cc-admin-token', withToken)
+      setProposals(result.proposals ?? []); setEmail(decodeEmail(token)); setPhase('authed')
+      sessionStorage.setItem('cc-admin-idtoken', token)
     } catch { setError('Could not reach the review service.') }
     setLoading(false)
   }
 
   async function setStatus(id: string, status: string) {
-    const response = await fetch(`/api/proposals?id=${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status }) })
+    if (!idToken) return
+    const response = await fetch(`/api/proposals?id=${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ status }) })
     if (response.ok) setProposals((current) => current.map((p) => (p.id === id ? { ...p, status } : p)))
+    else if (response.status === 401) { sessionStorage.removeItem('cc-admin-idtoken'); setIdToken(null); setPhase('signin'); setError('Your Google session expired. Please sign in again.') }
     else setError(`Could not update proposal (HTTP ${response.status}).`)
   }
 
-  // Auto-load once on mount if a token is already cached for this tab. Deferred a
-  // tick so the initial loading state isn't set synchronously inside the effect.
+  function signOut() {
+    window.google?.accounts.id.disableAutoSelect()
+    sessionStorage.removeItem('cc-admin-idtoken')
+    setIdToken(null); setEmail(null); setProposals([]); setError(null); setPhase('signin')
+  }
+
+  // Verify a cached token on mount (deferred a tick to avoid synchronous setState).
   useEffect(() => {
-    if (!token) return
-    const id = setTimeout(() => void load(token), 0)
-    return () => clearTimeout(id)
+    if (!idToken) return
+    const t = setTimeout(() => void load(idToken), 0)
+    return () => clearTimeout(t)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Render the Google button whenever we are asking the reviewer to sign in.
+  useEffect(() => {
+    if (phase !== 'signin' && phase !== 'denied') return
+    let cancelled = false
+    loadGis().then(() => {
+      if (cancelled || !window.google || !buttonRef.current) return
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response) => { setIdToken(response.credential); setPhase('checking'); void load(response.credential) },
+        auto_select: false,
+      })
+      buttonRef.current.innerHTML = ''
+      window.google.accounts.id.renderButton(buttonRef.current, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular' })
+    }).catch(() => setError('Could not load Google sign-in. Check your connection and try again.'))
+    return () => { cancelled = true }
+  }, [phase])
+
   return <div className="admin-shell">
-    <header><a className="brand" href="#top" aria-label="Compute Commons home"><span className="brand-mark" aria-hidden="true" />Compute Commons</a><nav><span className="meta">Reviewer console</span><a href="#top">Exit</a></nav></header>
+    <header><a className="brand" href="#top" aria-label="Compute Commons home"><span className="brand-mark" aria-hidden="true" />Compute Commons</a><nav><span className="meta">Reviewer console</span>{phase === 'authed' && email && <span className="signed-in">{email}</span>}{phase === 'authed' ? <button onClick={signOut}>Sign out</button> : <a href="#top">Exit</a>}</nav></header>
     <main className="admin-main">
       <h1>Proposal review queue</h1>
       <p className="byline">Approved proposals are not auto-executed. Approval records a reviewer decision only; distribution still requires independent security review.</p>
-      {!authed ? <form className="admin-auth" onSubmit={(e) => { e.preventDefault(); void load(token) }}>
-        <label>Admin token<input type="password" value={token} onChange={(e) => setToken(e.target.value)} autoFocus placeholder="ADMIN_TOKEN" /></label>
-        <button className="button primary" type="submit" disabled={loading || !token}>{loading ? 'Checking…' : 'View queue'}</button>
-        {error && <p className="form-error" role="alert">{error}</p>}
-      </form> : <>
-        <div className="admin-toolbar"><span className="meta">{proposals.length} proposal{proposals.length === 1 ? '' : 's'}</span><button className="button secondary small" onClick={() => void load(token)} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button></div>
+      {phase === 'checking' ? <p className="empty-state">Verifying your Google account…</p>
+      : phase === 'authed' ? <>
+        <div className="admin-toolbar"><span className="meta">{proposals.length} proposal{proposals.length === 1 ? '' : 's'}</span><button className="button secondary small" onClick={() => idToken && void load(idToken)} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button></div>
         {error && <p className="form-error" role="alert">{error}</p>}
         {proposals.length === 0 ? <p className="empty-state">No proposals yet.</p> : <div className="proposal-list">{proposals.map((p) => <article key={p.id} className="proposal-card">
           <div className="proposal-head"><strong>{p.institution}</strong><span className={`pill status-${p.status}`}>{p.status.replace('_', ' ')}</span></div>
@@ -138,7 +210,12 @@ function AdminView() {
           <div className="proposal-meta"><a href={p.repository} target="_blank" rel="noopener noreferrer">{p.repository} <ExternalLink size={12} /></a><span>{p.data_classification}</span>{p.contact_email && <span>{p.contact_email}</span>}<span>{new Date(p.created_at).toLocaleString()}</span></div>
           <div className="proposal-actions"><button className="button secondary small" disabled={p.status === 'approved'} onClick={() => void setStatus(p.id, 'approved')}>Approve</button><button className="button danger small" disabled={p.status === 'rejected'} onClick={() => void setStatus(p.id, 'rejected')}>Reject</button>{p.status !== 'pending_review' && <button className="button secondary small" onClick={() => void setStatus(p.id, 'pending_review')}>Reset</button>}</div>
         </article>)}</div>}
-      </>}
+      </>
+      : <div className="admin-auth">
+        <p className="signin-copy">{phase === 'denied' ? 'That account is not authorized. Sign in with the reviewer Google account.' : 'Sign in with the authorized Google account to review proposals.'}</p>
+        <div ref={buttonRef} className="gis-button" />
+        {error && <p className="form-error" role="alert">{error}</p>}
+      </div>}
     </main>
   </div>
 }
@@ -465,8 +542,8 @@ postMessage({ unitId, estimate, checksum })`}</pre>
           <p>Compute Commons collects no personal data. The full data inventory for this session:</p>
           <ul>
             <li><strong>Donor sessions stay on-device</strong> — compute progress, settings, and metrics live in browser memory only and are discarded when you close or navigate away. No donor data is transmitted.</li>
-            <li><strong>No donor storage</strong> — donating writes no cookies, localStorage, or IndexedDB. (The reviewer console at <code>#admin</code> keeps a typed admin token in sessionStorage for that tab only.)</li>
-            <li><strong>No analytics or tracking</strong> — no third-party scripts, pixels, fingerprinting, or telemetry. The CSP blocks external script sources at the browser level.</li>
+            <li><strong>No donor storage</strong> — donating writes no cookies, localStorage, or IndexedDB. (The reviewer console at <code>#admin</code> caches your Google sign-in token in sessionStorage for that tab only.)</li>
+            <li><strong>No analytics or tracking</strong> — the donor console loads no third-party scripts, pixels, fingerprinting, or telemetry. Google Identity Services loads only on the reviewer console (<code>#admin</code>) for sign-in, never on the donor page.</li>
             <li><strong>Receipt is local</strong> — generated on demand and downloaded directly to your device. Nothing about your compute session is sent to any server.</li>
             <li><strong>Researcher proposals are the one exception</strong> — when you submit the proposal form, those fields (institution, research question, repository, classification, and optional email) are sent to the Compute Commons backend and stored in a Postgres database for manual review. This is a deliberate submission you initiate; donating compute never sends anything.</li>
           </ul>

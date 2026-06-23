@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "latest",
+    "google-auth-library": "latest",
     "@vitejs/plugin-react": "latest",
     "vite": "latest",
     "typescript": "latest",

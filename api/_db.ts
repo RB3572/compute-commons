@@ -41,11 +41,3 @@ export function ensureSchema(): Promise<void> {
   }
   return schemaReady
 }
-
-export function isAuthorizedAdmin(authHeader: string | undefined): boolean {
-  const token = process.env.ADMIN_TOKEN
-  if (!token) return false
-  const expected = `Bearer ${token}`
-  // Length-then-content check; fine for a shared deployment secret.
-  return typeof authHeader === 'string' && authHeader.length === expected.length && authHeader === expected
-}

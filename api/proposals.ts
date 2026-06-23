@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ensureSchema, isAuthorizedAdmin, sql } from './_db.js'
+import { ensureSchema, sql } from './_db.js'
+import { authorizeAdmin } from './_auth.js'
 
 const DATA_CLASSES = ['Public', 'Synthetic'] as const
 const REVIEW_STATES = ['pending_review', 'approved', 'rejected'] as const
@@ -76,10 +77,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'GET') {
-      if (!isAuthorizedAdmin(req.headers.authorization)) {
-        res.status(process.env.ADMIN_TOKEN ? 401 : 503).json({ error: process.env.ADMIN_TOKEN ? 'Unauthorized.' : 'Admin review is not configured (ADMIN_TOKEN missing).' })
-        return
-      }
+      const auth = await authorizeAdmin(req.headers.authorization)
+      if (!auth.ok) { res.status(auth.status).json({ error: auth.error }); return }
       const rows = await sql`
         SELECT id, institution, research_question, repository, data_classification, contact_email, status, created_at
         FROM proposals ORDER BY created_at DESC LIMIT 500
@@ -89,10 +88,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'PATCH') {
-      if (!isAuthorizedAdmin(req.headers.authorization)) {
-        res.status(401).json({ error: 'Unauthorized.' })
-        return
-      }
+      const auth = await authorizeAdmin(req.headers.authorization)
+      if (!auth.ok) { res.status(auth.status).json({ error: auth.error }); return }
       const id = str(req.query.id)
       const status = str((req.body as Record<string, unknown>)?.status)
       if (!id) { res.status(400).json({ error: 'Missing proposal id.' }); return }
