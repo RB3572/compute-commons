@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { ArrowRight, BatteryMedium, Check, CheckCircle, Download, ExternalLink, FileCheck2, FlaskConical, HeartPulse, Info, LockKeyhole, Microscope, Pause, Play, ShieldCheck, Square, Dna, X } from 'lucide-react'
+import { ArrowRight, BatteryMedium, Check, CheckCircle, Download, ExternalLink, FileCheck2, FlaskConical, HeartPulse, Info, LockKeyhole, Microscope, Pause, Play, ShieldCheck, Square, Trash2, Dna, X } from 'lucide-react'
 import { estimateWattHours, formatCount, formatDuration, getProject, initialSession, projects, sessionReducer, verifyManifest } from './core'
 import type { WorkerMessage } from './compute.worker'
 
@@ -183,6 +183,15 @@ function AdminView() {
     else setError(`Could not update proposal (HTTP ${response.status}).`)
   }
 
+  async function removeProposal(id: string, institution: string) {
+    if (!idToken) return
+    if (!window.confirm(`Permanently delete the proposal from “${institution}”? This cannot be undone.`)) return
+    const response = await fetch(`/api/proposals?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Authorization: `Bearer ${idToken}` } })
+    if (response.ok) setProposals((current) => current.filter((p) => p.id !== id))
+    else if (response.status === 401) { sessionStorage.removeItem('cc-admin-idtoken'); setIdToken(null); setPhase('signin'); setError('Your Google session expired. Please sign in again.') }
+    else setError(`Could not delete proposal (HTTP ${response.status}).`)
+  }
+
   function signOut() {
     window.google?.accounts.id.disableAutoSelect()
     sessionStorage.removeItem('cc-admin-idtoken')
@@ -228,7 +237,7 @@ function AdminView() {
           <div className="proposal-head"><strong>{p.institution}</strong><span className={`pill status-${p.status}`}>{p.status.replace('_', ' ')}</span></div>
           <p className="proposal-q">{p.research_question}</p>
           <div className="proposal-meta"><a href={p.repository} target="_blank" rel="noopener noreferrer">{p.repository} <ExternalLink size={12} /></a><span>{p.data_classification}</span>{p.contact_email && <span>{p.contact_email}</span>}<span>{new Date(p.created_at).toLocaleString()}</span></div>
-          <div className="proposal-actions"><button className="button secondary small" disabled={p.status === 'approved'} onClick={() => void setStatus(p.id, 'approved')}>Approve</button><button className="button danger small" disabled={p.status === 'rejected'} onClick={() => void setStatus(p.id, 'rejected')}>Reject</button>{p.status !== 'pending_review' && <button className="button secondary small" onClick={() => void setStatus(p.id, 'pending_review')}>Reset</button>}</div>
+          <div className="proposal-actions"><button className="button secondary small" disabled={p.status === 'approved'} onClick={() => void setStatus(p.id, 'approved')}>Approve</button><button className="button danger small" disabled={p.status === 'rejected'} onClick={() => void setStatus(p.id, 'rejected')}>Reject</button>{p.status !== 'pending_review' && <button className="button secondary small" onClick={() => void setStatus(p.id, 'pending_review')}>Reset</button>}<button className="button danger small delete-action" aria-label={`Delete proposal from ${p.institution}`} onClick={() => void removeProposal(p.id, p.institution)}><Trash2 size={14} />Delete</button></div>
         </article>)}</div>}
       </>
       : <div className="admin-auth">
