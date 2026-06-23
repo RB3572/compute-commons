@@ -106,7 +106,8 @@ footer { max-width: 1480px; margin: 0 auto; border: 1px solid var(--border); bor
 .proposal-q { color: #454543; line-height: 1.55; font-size: 14px; margin: 10px 0; }
 .proposal-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--muted); align-items: center; }
 .proposal-meta a { display: inline-flex; align-items: center; gap: 4px; max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.proposal-actions { display: flex; gap: 8px; margin-top: 14px; }
+.proposal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.proposal-actions .delete-action { margin-left: auto; }
 .pill { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 4px 10px; border-radius: 99px; border: 1px solid; white-space: nowrap; }
 .pill.status-pending_review { color: #8a5a12; background: #fbf3e6; border-color: #e6d2ad; }
 .pill.status-approved { color: #2f6b46; background: #eef8f1; border-color: #b6dcc3; }
