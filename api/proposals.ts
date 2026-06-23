@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ensureSchema, isAuthorizedAdmin, sql } from './_db'
+import { ensureSchema, isAuthorizedAdmin, sql } from './_db.js'
 
 const DATA_CLASSES = ['Public', 'Synthetic'] as const
 const REVIEW_STATES = ['pending_review', 'approved', 'rejected'] as const
